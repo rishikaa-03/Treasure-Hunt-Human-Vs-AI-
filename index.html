@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treasure Hunt</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0f0f0f 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(20, 20, 20, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 900px;
+            border: 2px solid #333;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 3em;
+            background: linear-gradient(45deg, #ff6200, #9500ff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #064c4c, #51720e);
+            color: #000;
+            border: none;
+            padding: 20px 50px;
+            font-size: 1.5em;
+            font-weight: bold;
+            border-radius: 15px;
+            cursor: pointer;
+            display: block;
+            margin: 30px auto;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+        }
+
+        .grid {
+            display: grid;
+            gap: 2px;
+            margin: 20px auto;
+            width: fit-content;
+            background: #000;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .cell {
+            width: 45px;
+            height: 45px;
+            background: rgba(20, 20, 30, 0.8);
+            border: 1px solid #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
+
+        .scores {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            font-size: 1.5em;
+        }
+
+        .hint {
+            text-align: center;
+            padding: 20px;
+            background: rgba(40, 40, 40, 0.9);
+            border: 2px solid #ffd700;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            border: 4px solid #ffd700;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            background: #333;
+            border: 2px solid #666;
+            border-radius: 10px;
+            color: #fff;
+            margin: 20px 0;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .hint-display {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid #ffd700;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #ffd700;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="menu" class="screen active">
+            <h1>🏴 TREASURE HUNT 🏴</h1>
+            <h2 style="text-align: center; color: #aaa;">Beat AI... If You Can!</h2>
+            <p style="text-align: left;; margin: 30px 150px; font-size: 1.5em;">
+                💎 &nbsp;&nbsp; You have 5 treasures (💎) to find<br>
+                🪙 &nbsp;&nbsp; AI has 5 treasures (🪙) to find<br>
+                ⏱️ &nbsp;&nbsp; Race to finish all 5 fastest!<br>
+                🎮 &nbsp;&nbsp; Use arrow keys to move.<br>
+            </p>
+            <button class="btn" onclick="start()">Start Game</button>
+        </div>
+
+        <div id="game" class="screen">
+            <h1>🏆 Treasure Hunt</h1>
+            <div class="scores">
+                <div>👤 You: <span id="ps">0/5</span></div>
+                <div>🤖 AI: <span id="as">0/5</span></div>
+            </div>
+            <div class="hint" id="hint">Find the treasures!</div>
+            <div class="grid" id="grid"></div>
+        </div>
+
+        <div id="end" class="screen">
+            <h1>🏁 Race Complete!</h1>
+            <div style="text-align: center; font-size: 4em; margin: 30px 0;" id="emoji">🎉</div>
+            <div style="text-align: center; font-size: 2em; margin: 20px 0;" id="result"></div>
+            <div style="text-align: center; font-size: 1.5em; margin: 20px 0;">
+                <div>👤 Your Time: <span id="pt">0:00</span></div>
+                <div>🤖 AI Time: <span id="at">0:00</span></div>
+            </div>
+            <button class="btn" onclick="reset()">Play Again</button>
+        </div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h2 style="text-align: center; color: #ffd700;">🧠 Riddle!</h2>
+            <div id="q" style="padding: 20px; background: #333; border-radius: 10px; margin: 20px 0;"></div>
+            <div id="hd" class="hint-display">Need help? Click Get Hint!</div>
+            <input type="text" id="ans" placeholder="Your answer..." autoComplete="off">
+            <div class="modal-buttons">
+                <button onclick="submit()" style="background: #00ff87; color: #000;">Submit</button>
+                <button onclick="hint()" style="background: #ffd700; color: #000;">Hint (<span id="hl">3</span>)</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SIZE = 12;
+        const RIDDLES = [
+            { q: "I'm green and leafy, I stand up tall,I give you shade when summer calls,I live outside in parks and all.", a: "tree", h: ["Forests", "Shade", "Wood"] },
+            { q: "I'm the sky's way of taking shower, I make the roads slippery, never dour, Jump in me if you've got the power!", a: "rain", h: ["Monsoon", "Drops", "Storm"] },
+            { q: "I'll tell you 'Brute force is fine', Then laugh when when runtime crosses the line, I'm the place where TLE, WA and pain aligns.", a: "leetcode", h: ["Coding", "Contest", "Platform"] },
+            { q: "I look boring, yet your fear aligns, Drop me once and tension climbs, What am I, keeper of academic timelines?", a: "attendance", h: ["Present", "75%", "USN"] },
+            { q: "I'm searched only the night before, Though i've been there forevermore, What am I,the guide you always ignore?.", a: "syllabus", h: ["Exams", "Topics", "Outline"] }
+        ];
+
+        let g = {
+            hp: {x: 0, y: 0},
+            ap: {x: SIZE-1, y: SIZE-1},
+            ht: [],
+            at: [],
+            ob: [],
+            hs: 0,
+            as: 0,
+            st: null,
+            hf: null,
+            af: null,
+            hd: false,
+            ad: false,
+            cr: null,
+            hi: 0,
+            iv: null
+        };
+
+        function start() {
+            document.getElementById('menu').classList.remove('active');
+            document.getElementById('game').classList.add('active');
+
+            g.ob = [];
+            while (g.ob.length < 15) {
+                let x = Math.floor(Math.random() * SIZE);
+                let y = Math.floor(Math.random() * SIZE);
+                if ((x === 0 && y === 0) || (x === SIZE-1 && y === SIZE-1)) continue;
+                if (!g.ob.some(o => o.x === x && o.y === y)) g.ob.push({x, y});
+            }
+
+            g.ht = [];
+            g.at = [];
+            let sr = [...RIDDLES].sort(() => Math.random() - 0.5);
+            
+            while (g.ht.length < 5) {
+                let x = Math.floor(Math.random() * SIZE);
+                let y = Math.floor(Math.random() * SIZE);
+                if (g.ob.some(o => o.x === x && o.y === y)) continue;
+                if ((x === 0 && y === 0) || (x === SIZE-1 && y === SIZE-1)) continue;
+                if (g.ht.some(t => t.x === x && t.y === y) || g.at.some(t => t.x === x && t.y === y)) continue;
+                g.ht.push({x, y, r: sr[g.ht.length]});
+            }
+
+            while (g.at.length < 5) {
+                let x = Math.floor(Math.random() * SIZE);
+                let y = Math.floor(Math.random() * SIZE);
+                if (g.ob.some(o => o.x === x && o.y === y)) continue;
+                if ((x === 0 && y === 0) || (x === SIZE-1 && y === SIZE-1)) continue;
+                if (g.ht.some(t => t.x === x && t.y === y) || g.at.some(t => t.x === x && t.y === y)) continue;
+                g.at.push({x, y});
+            }
+
+            g.hp = {x: 0, y: 0};
+            g.ap = {x: SIZE-1, y: SIZE-1};
+            g.hs = 0;
+            g.as = 0;
+            g.hd = false;
+            g.ad = false;
+            g.st = Date.now();
+            g.hf = null;
+            g.af = null;
+
+            draw();
+            upd();
+            uhint();
+            ai();
+        }
+
+        function draw() {
+            let gr = document.getElementById('grid');
+            gr.style.gridTemplateColumns = `repeat(${SIZE}, 45px)`;
+            gr.innerHTML = '';
+            for (let y = 0; y < SIZE; y++) {
+                for (let x = 0; x < SIZE; x++) {
+                    let c = document.createElement('div');
+                    c.className = 'cell';
+                    c.id = `c${x}_${y}`;
+                    gr.appendChild(c);
+                }
+            }
+            render();
+        }
+
+        function render() {
+            for (let y = 0; y < SIZE; y++) {
+                for (let x = 0; x < SIZE; x++) {
+                    let c = document.getElementById(`c${x}_${y}`);
+                    c.innerHTML = '';
+                    c.style.background = '';
+
+                    if (g.ob.some(o => o.x === x && o.y === y)) {
+                        c.innerHTML = '🚧';
+                        c.style.background = '#1a1a1a';
+                    }
+
+                    if (g.ht.some(t => t.x === x && t.y === y)) c.innerHTML = '💎';
+                    if (g.at.some(t => t.x === x && t.y === y)) c.innerHTML = '🪙';
+
+                    if (g.hp.x === x && g.hp.y === y) {
+                        c.innerHTML = '👤';
+                        c.style.background = 'linear-gradient(135deg, #00ff87, #00cc6f)';
+                        c.style.borderRadius = '50%';
+                    }
+
+                    if (g.ap.x === x && g.ap.y === y) {
+                        c.innerHTML = '🤖';
+                        c.style.background = 'linear-gradient(135deg, #ff4757, #cc3644)';
+                        c.style.borderRadius = '50%';
+                    }
+                }
+            }
+        }
+
+        function upd() {
+            document.getElementById('ps').textContent = `${g.hs}/5`;
+            document.getElementById('as').textContent = `${g.as}/5`;
+        }
+
+        function uhint() {
+            if (g.hd) {
+                document.getElementById('hint').textContent = '🎉 You finished!';
+                return;
+            }
+
+            let act = g.ht.filter(t => t);
+            if (act.length === 0) return;
+
+            let d = act.map(t => ({
+                d: Math.sqrt((t.x - g.hp.x)**2 + (t.y - g.hp.y)**2),
+                t: t
+            })).sort((a, b) => a.d - b.d)[0];
+
+            let h = '';
+            if (d.d < 2) h = '🔥 BURNING HOT!';
+            else if (d.d < 3) h = '🌡️ Very Hot!';
+            else if (d.d < 5) h = '☀️ Hot!';
+            else if (d.d < 7) h = '🌤️ Warm';
+            else if (d.d < 9) h = '❄️ Cold';
+            else h = '🧊 Freezing!';
+
+            document.getElementById('hint').textContent = h;
+        }
+
+        function move(dx, dy) {
+            if (g.hd || document.getElementById('modal').classList.contains('active')) return;
+
+            let nx = g.hp.x + dx;
+            let ny = g.hp.y + dy;
+
+            if (nx < 0 || nx >= SIZE || ny < 0 || ny >= SIZE) return;
+            if (g.ob.some(o => o.x === nx && o.y === ny)) return;
+
+            g.hp = {x: nx, y: ny};
+
+            let t = g.ht.find(t => t && t.x === nx && t.y === ny);
+            if (t) {
+                g.cr = t;
+                g.hi = 0;
+                show();
+            } else {
+                uhint();
+            }
+
+            render();
+        }
+
+        function show() {
+            document.getElementById('modal').classList.add('active');
+            document.getElementById('q').textContent = g.cr.r.q;
+            document.getElementById('ans').value = '';
+            document.getElementById('hd').textContent = 'Need help? Click Get Hint!';
+            document.getElementById('hl').textContent = '3';
+            document.getElementById('ans').focus();
+        }
+
+        function submit() {
+            let a = document.getElementById('ans').value.toLowerCase().trim();
+            if (a === g.cr.r.a) {
+                g.hs++;
+                g.ht = g.ht.filter(t => t !== g.cr);
+                document.getElementById('modal').classList.remove('active');
+
+                if (g.hs === 5) {
+                    g.hd = true;
+                    g.hf = Date.now() - g.st;
+                    check();
+                }
+
+                upd();
+                render();
+                uhint();
+            } else {
+                document.getElementById('hd').textContent = '❌ Oops! (Use your brain human!)';
+            }
+        }
+
+        function hint() {
+            if (g.hi < g.cr.r.h.length) {
+                document.getElementById('hd').textContent = `💡 ${g.cr.r.h[g.hi]}`;
+                g.hi++;
+                document.getElementById('hl').textContent = 3 - g.hi;
+            } else {
+                document.getElementById('hd').textContent = 'No more hints!';
+            }
+        }
+
+        function path(s, e, ob) {
+            let h = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+            let o = [{...s, g: 0, h: h(s, e), f: h(s, e), p: null}];
+            let c = [];
+
+            while (o.length > 0) {
+                o.sort((a, b) => a.f - b.f);
+                let cur = o.shift();
+
+                if (cur.x === e.x && cur.y === e.y) {
+                    let p = [];
+                    let n = cur;
+                    while (n.p) {
+                        p.unshift({x: n.x, y: n.y});
+                        n = n.p;
+                    }
+                    return p;
+                }
+
+                c.push(cur);
+
+                let nb = [
+                    {x: cur.x + 1, y: cur.y},
+                    {x: cur.x - 1, y: cur.y},
+                    {x: cur.x, y: cur.y + 1},
+                    {x: cur.x, y: cur.y - 1}
+                ];
+
+                for (let n of nb) {
+                    if (n.x < 0 || n.x >= SIZE || n.y < 0 || n.y >= SIZE) continue;
+                    if (ob.some(o => o.x === n.x && o.y === n.y)) continue;
+                    if (c.some(cn => cn.x === n.x && cn.y === n.y)) continue;
+
+                    let ng = cur.g + 1;
+                    let nh = h(n, e);
+                    let nf = ng + nh;
+
+                    let ex = o.find(on => on.x === n.x && on.y === n.y);
+                    if (ex) {
+                        if (ng < ex.g) {
+                            ex.g = ng;
+                            ex.f = nf;
+                            ex.p = cur;
+                        }
+                    } else {
+                        o.push({...n, g: ng, h: nh, f: nf, p: cur});
+                    }
+                }
+            }
+            return [];
+        }
+
+        function ai() {
+            if (g.iv) clearInterval(g.iv);
+
+            g.iv = setInterval(() => {
+                if (g.ad) {
+                    clearInterval(g.iv);
+                    return;
+                }
+
+                let act = g.at.filter(t => t);
+                if (act.length === 0) return;
+
+                let near = null;
+                let min = Infinity;
+                act.forEach(t => {
+                    let d = Math.abs(t.x - g.ap.x) + Math.abs(t.y - g.ap.y);
+                    if (d < min) {
+                        min = d;
+                        near = t;
+                    }
+                });
+
+                if (!near) return;
+
+                let p = path(g.ap, near, g.ob);
+                if (p.length > 0) {
+                    g.ap = p[0];
+
+                    let f = act.find(t => t.x === g.ap.x && t.y === g.ap.y);
+                    if (f) {
+                        setTimeout(() => {
+                            g.as++;
+                            g.at = g.at.filter(t => t !== f);
+                            upd();
+                            render();
+
+                            if (g.as === 5) {
+                                g.ad = true;
+                                g.af = Date.now() - g.st;
+                                check();
+                            }
+                        }, 2000);
+                    }
+                }
+
+                render();
+            }, 500);
+        }
+
+        function check() {
+            if (g.hd && g.ad) {
+                clearInterval(g.iv);
+                document.getElementById('game').classList.remove('active');
+                document.getElementById('end').classList.add('active');
+
+                let ft = (ms) => {
+                    let s = Math.floor(ms / 1000);
+                    let m = Math.floor(s / 60);
+                    let rs = s % 60;
+                    let ml = Math.floor((ms % 1000) / 10);
+                    return `${m}:${rs.toString().padStart(2, '0')}.${ml.toString().padStart(2, '0')}`;
+                };
+
+                document.getElementById('pt').textContent = ft(g.hf);
+                document.getElementById('at').textContent = ft(g.af);
+
+                if (g.hf < g.af) {
+                    document.getElementById('emoji').textContent = '🎉🏆🎉';
+                    document.getElementById('result').textContent = 'YOU WON!';
+                } else if (g.hf > g.af) {
+                    document.getElementById('emoji').textContent = '🤖💀👾';
+                    document.getElementById('result').textContent = 'AI WON!';
+                } else {
+                    document.getElementById('emoji').textContent = '🤝😮🤝';
+                    document.getElementById('result').textContent = 'TIE!';
+                }
+            }
+        }
+
+        function reset() {
+            if (g.iv) clearInterval(g.iv);
+            document.getElementById('end').classList.remove('active');
+            document.getElementById('menu').classList.add('active');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp') { e.preventDefault(); move(0, -1); }
+            if (e.key === 'ArrowDown') { e.preventDefault(); move(0, 1); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); move(-1, 0); }
+            if (e.key === 'ArrowRight') { e.preventDefault(); move(1, 0); }
+            if (e.key === 'Enter' && document.getElementById('modal').classList.contains('active')) {
+                submit();
+            }
+        });
+    </script>
+</body>
+</html>
